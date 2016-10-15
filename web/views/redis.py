@@ -1,6 +1,8 @@
 from django.template import loader
 from django.http import HttpResponse
 import redis
+from django.conf import settings
+import collections
 
 
 def index(request):
@@ -11,8 +13,10 @@ def index(request):
 
 
 def redis_data():
-    data = {}
-    redis_object = redis.StrictRedis(host='localhost', port=6379, db=0)
+    data = collections.OrderedDict()
+    redis_config = settings.REDIS_CONFIG
+    redis_object = redis.StrictRedis(host=redis_config.get('host', ''), port=redis_config.get('port'),
+                                     db=redis_config.get('db'))
     keys = redis_object.keys('*')
     for key in keys:
         skey = key.decode("utf-8")
