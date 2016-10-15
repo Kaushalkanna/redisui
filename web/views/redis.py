@@ -12,15 +12,15 @@ def index(request):
 
 def redis_data():
     data = {}
-    r = redis.StrictRedis(host='localhost', port=6379, db=0)
-    keys = r.keys('*')
+    redis_object = redis.StrictRedis(host='localhost', port=6379, db=0)
+    keys = redis_object.keys('*')
     for key in keys:
         skey = key.decode("utf-8")
-        ktype = r.type(key)
+        ktype = redis_object.type(key)
         if ktype == b'string':
-            data[skey] = str(r.get(key).decode("utf-8"))
-        if ktype == b'hash':
-            data[skey] = str(r.hgetall(key))
-        if ktype == b'list':
-            data[skey] = r.lrange(key, 0, -1)
+            data[skey] = redis_object.get(key).decode("utf-8")
+        elif ktype == b'hash':
+            data[skey] = redis_object.hgetall(key)
+        elif ktype == b'list':
+            data[skey] = redis_object.lrange(key, 0, -1)
     return data
