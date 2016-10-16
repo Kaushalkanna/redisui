@@ -5,26 +5,31 @@ from django.conf import settings
 import collections
 
 
-def index(request):
-    data = redis_data()
-    context = {'data': data}
+def data(request):
+    req_obj = request.GET.copy()
+    env = req_obj.get("db")
+    r_data = redis_data(env)
+    context = {'data': r_data, 'env': env.upper()}
     template = loader.get_template('web/redis_data.html')
     return HttpResponse(template.render(context, request))
 
 
-def redis_data():
-    data = collections.OrderedDict()
+def redis_data(endpoint):
+    r_data = collections.OrderedDict()
     redis_config = settings.REDIS_CONFIG
-    redis_object = redis.StrictRedis(host=redis_config.get('host', ''), port=redis_config.get('port'),
-                                     db=redis_config.get('db'))
+    if endpoint == 'prod':
+        redis_object = redis.StrictRedis(host=redis_config.get('host'), port=redis_config.get('port'),
+                                         db=redis_config.get('db'))
+    else:
+        redis_object = redis.StrictRedis(host='localhost', port=6379, db=0)
     keys = redis_object.keys('*')
     for key in keys:
-        skey = key.decode("utf-8")
-        ktype = redis_object.type(key)
-        if ktype == b'string':
-            data[skey] = redis_object.get(key).decode("utf-8")
-        elif ktype == b'hash':
-            data[skey] = redis_object.hgetall(key)
-        elif ktype == b'list':
-            data[skey] = redis_object.lrange(key, 0, -1)
-    return data
+        s_key = key.decode("utf-8")
+        k_type = redis_object.type(key)
+        if k_type == b'string':
+            r_data[s_key] = redis_object.get(key).decode("utf-8")
+        elif k_type == b'hash':
+            r_data[s_key] = redis_object.hgetall(key)
+        elif k_type == b'list':
+            r_data[s_key] = redis_object.lrange(key, 0, -1)
+    return r_data
