@@ -27,9 +27,11 @@ def redis_data(endpoint):
         s_key = key.decode("utf-8")
         k_type = redis_object.type(key)
         if k_type == b'string':
-            r_data[s_key] = redis_object.get(key).decode("utf-8")
-        elif k_type == b'hash':
-            r_data[s_key] = redis_object.hgetall(key)
-        elif k_type == b'list':
-            r_data[s_key] = redis_object.lrange(key, 0, -1)
+            m = redis_object.get(key).decode("utf-8") if redis_object.get(key).decode("utf-8") in ['healthy', 'unhealthy'] else ''
+            if m:
+                r_data[s_key] = m
+        # elif k_type == b'hash':
+        #     r_data[s_key] = redis_object.hgetall(key)
+        # elif k_type == b'list':
+        #     r_data[s_key] = redis_object.lrange(key, 0, -1)
     return r_data
